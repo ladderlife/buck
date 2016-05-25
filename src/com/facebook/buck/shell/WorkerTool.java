@@ -16,30 +16,39 @@
 
 package com.facebook.buck.shell;
 
+import com.facebook.buck.model.BuildTargets;
 import com.facebook.buck.rules.BinaryBuildRule;
 import com.facebook.buck.rules.BuildRule;
 import com.facebook.buck.rules.BuildRuleParams;
 import com.facebook.buck.rules.HasRuntimeDeps;
 import com.facebook.buck.rules.NoopBuildRule;
 import com.facebook.buck.rules.SourcePathResolver;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedSet;
+
+import java.nio.file.Path;
 
 public class WorkerTool extends NoopBuildRule implements HasRuntimeDeps {
 
   private final BinaryBuildRule exe;
-  private final Iterable<BuildRule> depsFromStartupArgs;
   private final String args;
+  private final ImmutableMap<String, String> env;
 
   protected WorkerTool(
       BuildRuleParams ruleParams,
       SourcePathResolver resolver,
       BinaryBuildRule exe,
-      Iterable<BuildRule> depsFromStartupArgs,
-      String args) {
+      String args,
+      ImmutableMap<String, String> env) {
     super(ruleParams, resolver);
     this.exe = exe;
-    this.depsFromStartupArgs = depsFromStartupArgs;
     this.args = args;
+    this.env = env;
+  }
+
+  public Path getTempDir() {
+    return BuildTargets.getScratchPath(
+        getProjectFilesystem(), getBuildTarget(), "%s__worker");
   }
 
   public BinaryBuildRule getBinaryBuildRule() {
@@ -50,12 +59,12 @@ public class WorkerTool extends NoopBuildRule implements HasRuntimeDeps {
     return this.args;
   }
 
+  public ImmutableMap<String, String> getEnv() {
+    return this.env;
+  }
+
   @Override
   public ImmutableSortedSet<BuildRule> getRuntimeDeps() {
-    return ImmutableSortedSet.<BuildRule>naturalOrder()
-        .add(exe)
-        .addAll(exe.getExecutableCommand().getDeps(getResolver()))
-        .addAll(depsFromStartupArgs)
-        .build();
+    return getDeps();
   }
 }

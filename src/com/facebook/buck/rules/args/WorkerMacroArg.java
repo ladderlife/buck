@@ -27,6 +27,9 @@ import com.facebook.buck.rules.macros.MacroHandler;
 import com.facebook.buck.rules.macros.WorkerMacroExpander;
 import com.facebook.buck.shell.WorkerTool;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+
+import java.nio.file.Path;
 
 public class WorkerMacroArg extends MacroArg {
 
@@ -71,15 +74,24 @@ public class WorkerMacroArg extends MacroArg {
           target));
     }
     this.workerTool = (WorkerTool) workerTool;
+    SourcePathResolver pathResolver = new SourcePathResolver(resolver);
     startupCommand = this.workerTool
         .getBinaryBuildRule()
         .getExecutableCommand()
-        .getCommandPrefix(new SourcePathResolver(resolver));
+        .getCommandPrefix(pathResolver);
     jobArgs = macroHandler.expand(target, cellNames, resolver, unexpanded).trim();
   }
 
   public ImmutableList<String> getStartupCommand() {
     return startupCommand;
+  }
+
+  public ImmutableMap<String, String> getEnvironment() {
+    return this.workerTool.getEnv();
+  }
+
+  public Path getTempDir() {
+    return workerTool.getTempDir();
   }
 
   public String getStartupArgs() {
