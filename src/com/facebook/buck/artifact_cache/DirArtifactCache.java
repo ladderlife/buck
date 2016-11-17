@@ -83,6 +83,7 @@ public class DirArtifactCache implements ArtifactCache {
     if (!filesystem.isDirectory(cacheDir)) {
       filesystem.mkdirs(cacheDir);
     }
+    deleteOldFiles();
   }
 
   @Override
