@@ -131,6 +131,7 @@ public class JavaBinaryDescription
             args.getDisallowAllDuplicates().orElse(false),
             args.getMetaInfDirectory().orElse(null),
             args.getBlacklist(),
+            args.getCompressionLevel().orElse(-1),
             transitiveClasspathDeps,
             transitiveClasspaths,
             javaBuckConfig.shouldCacheBinaries(),
@@ -204,5 +205,7 @@ public class JavaBinaryDescription
     ImmutableSet<Pattern> getBlacklist();
 
     Optional<Flavor> getDefaultCxxPlatform();
+
+    Optional<Integer> getCompressionLevel();
   }
 }

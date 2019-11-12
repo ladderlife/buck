@@ -21,10 +21,9 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
-import java.io.ByteArrayOutputStream;
+import com.google.common.io.CountingOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.zip.Deflater;
@@ -48,8 +47,7 @@ class EntryAccounting {
 
   private static final int DATA_DESCRIPTOR_FLAG = 1 << 3;
   private static final int UTF8_NAMES_FLAG = 1 << 11;
-  private static final int ARBITRARY_SIZE = 1024;
-  private static final byte[] emptyBytes = new byte[] {};
+  private static final int ARBITRARY_SIZE = 8192;
 
   private final ZipEntry entry;
   private final Method method;
@@ -69,12 +67,12 @@ class EntryAccounting {
    */
   private int flags = UTF8_NAMES_FLAG;
 
-  private final Deflater deflater = new Deflater(Deflater.DEFAULT_COMPRESSION, true);
-  private final byte[] buffer = new byte[ARBITRARY_SIZE];
+  private Deflater deflater = new Deflater(Deflater.DEFAULT_COMPRESSION, true);
+  private byte[] buffer = new byte[ARBITRARY_SIZE];
 
   public EntryAccounting(Clock clock, ZipEntry entry, long currentOffset) {
     this.entry = entry;
-    this.method = Method.detect(entry.getMethod());
+    this.method = Method.detect(entry);
     this.offset = currentOffset;
 
     if (entry.getTime() == -1) {
@@ -186,84 +184,76 @@ class EntryAccounting {
       }
     }
 
-    if (requiresDataDescriptor()) {
+    if (method.requiresDataDescriptor) {
       flags |= DATA_DESCRIPTOR_FLAG;
     }
 
-    try (ByteArrayOutputStream stream = new ByteArrayOutputStream()) {
-      ByteIo.writeInt(stream, ZipEntry.LOCSIG);
+    CountingOutputStream stream = new CountingOutputStream(out);
+    ByteIo.writeInt(stream, ZipEntry.LOCSIG);
 
-      boolean useZip64;
-      if (!requiresDataDescriptor() && entry.getSize() >= ZipConstants.ZIP64_MAGICVAL) {
-        useZip64 = true;
-      } else {
-        useZip64 = false;
-      }
-
-      ByteIo.writeShort(stream, getRequiredExtractVersion(useZip64));
-      ByteIo.writeShort(stream, flags);
-      ByteIo.writeShort(stream, getCompressionMethod());
-      ByteIo.writeInt(stream, getTime());
-
-      // If we don't know the size or CRC of the data in advance (such as when in deflate mode),
-      // we write zeros now, and append the actual values (the data descriptor) after the entry
-      // bytes has been fully written.
-      if (requiresDataDescriptor()) {
-        ByteIo.writeInt(stream, 0);
-        ByteIo.writeInt(stream, 0);
-        ByteIo.writeInt(stream, 0);
-      } else {
-        ByteIo.writeInt(stream, entry.getCrc());
-        if (entry.getSize() >= ZipConstants.ZIP64_MAGICVAL) {
-          ByteIo.writeInt(stream, ZipConstants.ZIP64_MAGICVAL);
-          ByteIo.writeInt(stream, ZipConstants.ZIP64_MAGICVAL);
-        } else {
-          ByteIo.writeInt(stream, entry.getSize());
-          ByteIo.writeInt(stream, entry.getSize());
-        }
-      }
-
-      byte[] nameBytes = entry.getName().getBytes(Charsets.UTF_8);
-      ByteIo.writeShort(stream, nameBytes.length);
-      ByteIo.writeShort(stream, useZip64 ? ZipConstants.ZIP64_LOCHDR : 0);
-      stream.write(nameBytes);
-      if (useZip64) {
-        ByteIo.writeShort(stream, ZipConstants.ZIP64_EXTID);
-        ByteIo.writeShort(stream, 16);
-        ByteIo.writeLong(stream, entry.getSize());
-        ByteIo.writeLong(stream, entry.getSize());
-      }
-
-      byte[] bytes = stream.toByteArray();
-      out.write(bytes);
-      return bytes.length;
+    boolean useZip64;
+    if (!method.requiresDataDescriptor && entry.getSize() >= ZipConstants.ZIP64_MAGICVAL) {
+      useZip64 = true;
+    } else {
+      useZip64 = false;
     }
+
+    ByteIo.writeShort(stream, getRequiredExtractVersion(useZip64));
+    ByteIo.writeShort(stream, flags);
+    ByteIo.writeShort(stream, getCompressionMethod());
+    ByteIo.writeInt(stream, getTime());
+
+    // If we don't know the size or CRC of the data in advance (such as when in deflate mode),
+    // we write zeros now, and append the actual values (the data descriptor) after the entry
+    // bytes has been fully written.
+    if (method.requiresDataDescriptor) {
+      ByteIo.writeInt(stream, 0);
+      ByteIo.writeInt(stream, 0);
+      ByteIo.writeInt(stream, 0);
+    } else {
+      ByteIo.writeInt(stream, entry.getCrc());
+      if (entry.getSize() >= ZipConstants.ZIP64_MAGICVAL) {
+        ByteIo.writeInt(stream, ZipConstants.ZIP64_MAGICVAL);
+        ByteIo.writeInt(stream, ZipConstants.ZIP64_MAGICVAL);
+      } else {
+        ByteIo.writeInt(stream, entry.getSize());
+        ByteIo.writeInt(stream, entry.getSize());
+      }
+    }
+
+    byte[] nameBytes = entry.getName().getBytes(Charsets.UTF_8);
+    ByteIo.writeShort(stream, nameBytes.length);
+    ByteIo.writeShort(stream, useZip64 ? ZipConstants.ZIP64_LOCHDR : 0);
+    stream.write(nameBytes);
+    if (useZip64) {
+      ByteIo.writeShort(stream, ZipConstants.ZIP64_EXTID);
+      ByteIo.writeShort(stream, 16);
+      ByteIo.writeLong(stream, entry.getSize());
+      ByteIo.writeLong(stream, entry.getSize());
+    }
+
+    return stream.getCount();
   }
 
-  private byte[] getDataDescriptor() throws IOException {
-    if (!requiresDataDescriptor()) {
-      return emptyBytes;
+  private long writeDataDescriptor(OutputStream rawOut) throws IOException {
+    CountingOutputStream out = new CountingOutputStream(rawOut);
+    ByteIo.writeInt(out, ZipEntry.EXTSIG);
+    ByteIo.writeInt(out, getCrc());
+    if (getCompressedSize() >= ZipConstants.ZIP64_MAGICVAL
+        || getSize() >= ZipConstants.ZIP64_MAGICVAL) {
+      ByteIo.writeLong(out, getCompressedSize());
+      ByteIo.writeLong(out, getSize());
+    } else {
+      ByteIo.writeInt(out, getCompressedSize());
+      ByteIo.writeInt(out, getSize());
     }
-
-    try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-      ByteIo.writeInt(out, ZipEntry.EXTSIG);
-      ByteIo.writeInt(out, getCrc());
-      if (getCompressedSize() >= ZipConstants.ZIP64_MAGICVAL
-          || getSize() >= ZipConstants.ZIP64_MAGICVAL) {
-        ByteIo.writeLong(out, getCompressedSize());
-        ByteIo.writeLong(out, getSize());
-      } else {
-        ByteIo.writeInt(out, getCompressedSize());
-        ByteIo.writeInt(out, getSize());
-      }
-      return out.toByteArray();
-    }
+    return out.getCount();
   }
 
   private int deflate(OutputStream out) throws IOException {
     int written = deflater.deflate(buffer, 0, buffer.length);
     if (written > 0) {
-      out.write(Arrays.copyOf(buffer, written));
+      out.write(buffer, 0, written);
     }
     return written;
   }
@@ -274,7 +264,7 @@ class EntryAccounting {
     }
     updateCrc(b, off, len);
 
-    if (method == Method.STORE) {
+    if (method == Method.STORE || method == Method.STORE_UNBOUNDED) {
       out.write(b, off, len);
       length += len;
     } else if (method == Method.DEFLATE) {
@@ -291,6 +281,14 @@ class EntryAccounting {
    * local file header, but counting the data descriptor if present). Must be called exactly once.
    */
   public long finish(OutputStream out) throws IOException {
+    if (method == Method.DEFLATE) {
+      deflater.finish();
+      while (!deflater.finished()) {
+        deflate(out);
+      }
+    }
+
+    // finalize the entry.
     if (method == Method.STORE) {
       Preconditions.checkState(
           entry.getSize() == length && entry.getCompressedSize() == length,
@@ -298,28 +296,25 @@ class EntryAccounting {
       Preconditions.checkState(
           entry.getCrc() == calculateCrc(),
           "CRC of bytes written differs from what is specified in the entry.");
-    } else if (method == Method.DEFLATE) {
-      deflater.finish();
-      while (!deflater.finished()) {
-        deflate(out);
-      }
+    } else if (method == Method.STORE_UNBOUNDED) {
+      entry.setSize(length);
+      entry.setCompressedSize(length);
+      entry.setCrc(calculateCrc());
+    } else {
       entry.setSize(deflater.getBytesRead());
       entry.setCompressedSize(deflater.getBytesWritten());
       entry.setCrc(calculateCrc());
     }
 
+    // write the data descriptor if required
+    long dataDescriptorLength = method.requiresDataDescriptor ? writeDataDescriptor(out) : 0;
+
     // regardless of the method used, end the deflater to free native resources.
     deflater.end();
+    deflater = null;
+    buffer = null;
 
-    // write the data descriptor if required
-    byte[] dataDescriptor = getDataDescriptor();
-    out.write(dataDescriptor);
-
-    return entry.getCompressedSize() + dataDescriptor.length;
-  }
-
-  private boolean requiresDataDescriptor() {
-    return method == Method.DEFLATE;
+    return entry.getCompressedSize() + dataDescriptorLength;
   }
 
   private void updateCrc(byte[] b, int off, int len) {
@@ -331,28 +326,31 @@ class EntryAccounting {
   }
 
   private enum Method {
-    DEFLATE(20, 8),
-    STORE(10, 0),
+    DEFLATE(20, 8, true),
+    STORE(10, 0, false),
+    STORE_UNBOUNDED(10, 0, true),
     ;
 
     private final int requiredVersion;
     private final int compressionMethod;
+    private final boolean requiresDataDescriptor;
 
-    Method(int requiredVersion, int compressionMethod) {
+    Method(int requiredVersion, int compressionMethod, boolean requiresDataDescriptor) {
       this.requiredVersion = requiredVersion;
       this.compressionMethod = compressionMethod;
+      this.requiresDataDescriptor = requiresDataDescriptor;
     }
 
-    public static Method detect(int fromZipMethod) {
-      switch (fromZipMethod) {
+    public static Method detect(ZipEntry entry) {
+      switch (entry.getMethod()) {
         case -1:
           return DEFLATE;
         case ZipEntry.DEFLATED:
           return DEFLATE;
         case ZipEntry.STORED:
-          return STORE;
+          return entry.getCompressedSize() == -1 ? STORE_UNBOUNDED : STORE;
         default:
-          throw new IllegalArgumentException("Cannot determine zip method from: " + fromZipMethod);
+          throw new IllegalArgumentException("Cannot determine zip method from: " + entry);
       }
     }
   }
