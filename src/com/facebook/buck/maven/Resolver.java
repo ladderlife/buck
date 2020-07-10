@@ -29,6 +29,7 @@ import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSetMultimap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Maps;
@@ -122,6 +123,7 @@ public class Resolver {
 
   private final VersionScheme versionScheme = new GenericVersionScheme();
   private final List<String> visibility;
+  private final ImmutableSet<String> excludedProjects;
   private final ModelBuilder modelBuilder;
 
   private ImmutableList<RemoteRepository> repos;
@@ -143,6 +145,7 @@ public class Resolver {
     this.buckRepoRoot = Paths.get(Objects.requireNonNull(config.buckRepoRoot));
     this.buckThirdPartyRelativePath = Paths.get(Objects.requireNonNull(config.thirdParty));
     this.visibility = config.visibility;
+    this.excludedProjects = ImmutableSet.copyOf(config.excludedProjects);
 
     this.repos =
         config.repositories.stream()
@@ -403,6 +406,12 @@ public class Resolver {
       String key = entry.getKey();
       Artifact artifact = entry.getValue();
 
+      if (this.excludedProjects.contains(getProjectName(artifact))) {
+        System.out.println("Excluding known dep " + buildKey(artifact) + "-"
+                          + artifact.getVersion());
+        continue;
+      }
+
       graph.addNode(artifact);
 
       List<Dependency> dependencies = getDependenciesOf(artifact);
@@ -410,6 +419,12 @@ public class Resolver {
       for (Dependency dependency : dependencies) {
         if (dependency.getArtifact() == null) {
           System.out.println("Skipping because artifact missing: " + dependency);
+          continue;
+        }
+
+        if (this.excludedProjects.contains(getProjectName(dependency.getArtifact()))) {
+          System.out.println("Excluding dep " + buildKey(dependency.getArtifact())
+                            + dependency.getArtifact().getVersion() + " for " + buildKey(artifact));
           continue;
         }
 

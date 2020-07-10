@@ -59,6 +59,10 @@ public class ArtifactConfig {
     @Nullable
     public String artifactConfigJson = null;
 
+    @Option(name = "-excluded-projects", usage = "Projects that shouldn't be imported as DEPS")
+    @Nullable
+    public List<String> excludedProjects = new ArrayList<>();
+
     @Option(name = "-help", help = true)
     public boolean showHelp;
   }
@@ -79,6 +83,9 @@ public class ArtifactConfig {
 
   public List<String> visibility = new ArrayList<>();
 
+  @JsonProperty("excluded_projects")
+  public List<String> excludedProjects = new ArrayList<>();
+
   public ArtifactConfig mergeCmdLineArgs(CmdLineArgs args) {
     buckRepoRoot = MoreObjects.firstNonNull(args.buckRepoRoot, buckRepoRoot);
 
@@ -88,6 +95,8 @@ public class ArtifactConfig {
     artifacts.addAll(args.artifacts);
 
     visibility.addAll(args.visibility);
+
+    excludedProjects.addAll(args.excludedProjects);
 
     for (String url : args.repositoryURIs) {
       repositories.add(new Repository(url));
