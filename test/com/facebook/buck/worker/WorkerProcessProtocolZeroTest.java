@@ -16,6 +16,7 @@
 
 package com.facebook.buck.worker;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -132,7 +133,7 @@ public class WorkerProcessProtocolZeroTest {
         new WorkerProcessProtocolZero.CommandSender(
             dummyOutputStream, jsonReader, newTempFile().getPath(), () -> {}, () -> true);
 
-    protocol.receiveCommandResponse(messageID);
+    assertEquals(protocol.receiveNextCommandResponse().getCommandId(), messageID);
   }
 
   @Test
@@ -150,25 +151,7 @@ public class WorkerProcessProtocolZeroTest {
             () -> {},
             () -> true);
 
-    protocol.receiveCommandResponse(123);
-  }
-
-  @Test
-  public void testReceiveCommandResponseWithIncorrectMessageID() throws IOException {
-    int messageID = 123;
-    expectedException.expect(HumanReadableException.class);
-    expectedException.expectMessage(
-        String.format("Expected response's \"id\" value to be \"%d\"", messageID));
-
-    int differentMessageID = 456;
-    InputStream jsonReader =
-        createMockJsonReaderForReceiveCommandResponse(differentMessageID, "result", 0);
-
-    WorkerProcessProtocol.CommandSender protocol =
-        new WorkerProcessProtocolZero.CommandSender(
-            dummyOutputStream, jsonReader, newTempFile().getPath(), () -> {}, () -> true);
-
-    protocol.receiveCommandResponse(messageID);
+    assertEquals(protocol.receiveNextCommandResponse().getCommandId(), 123);
   }
 
   @Test
@@ -184,7 +167,7 @@ public class WorkerProcessProtocolZeroTest {
         new WorkerProcessProtocolZero.CommandSender(
             dummyOutputStream, jsonReader, newTempFile().getPath(), () -> {}, () -> true);
 
-    protocol.receiveCommandResponse(messageID);
+    assertEquals(protocol.receiveNextCommandResponse().getCommandId(), messageID);
   }
 
   @Test

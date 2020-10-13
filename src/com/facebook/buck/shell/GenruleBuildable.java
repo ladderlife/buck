@@ -882,6 +882,7 @@ public class GenruleBuildable implements Buildable {
                   workerMacroArg.getStartupCommand(),
                   workerMacroArg.getEnvironment(),
                   workerMacroArg.getMaxWorkers(),
+                  workerMacroArg.isAsync(),
                   workerMacroArg.getPersistentWorkerKey().isPresent()
                       ? Optional.of(
                           WorkerProcessIdentity.of(
