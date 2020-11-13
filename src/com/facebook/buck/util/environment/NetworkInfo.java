@@ -46,14 +46,6 @@ public final class NetworkInfo {
     }
   }
 
-  // Buck's own integration tests will run with this system property
-  // set to false.
-  //
-  // Otherwise, we would need to add libjcocoa.dylib to
-  // java.library.path, which could interfere with external Java
-  // tests' own C library dependencies.
-  private static final boolean ENABLE_OBJC = Boolean.getBoolean("buck.enable_objc");
-
   private NetworkInfo() {}
 
   public static void generateActiveNetworkAsync(
@@ -65,17 +57,11 @@ public final class NetworkInfo {
   }
 
   public static Network getLikelyActiveNetwork() {
-    if (ENABLE_OBJC) {
-      return MacNetworkConfiguration.getLikelyActiveNetwork();
-    }
     return new Network(NetworkMedium.UNKNOWN);
   }
 
   public static Optional<String> getWifiSsid() {
-    // TODO(royw): Support Linux and Windows.
-    if (ENABLE_OBJC) {
-      return MacWifiSsidFinder.findCurrentSsid();
-    }
+    // TODO(royw): Support Big Sur, Linux and Windows.
     return Optional.empty();
   }
 }
