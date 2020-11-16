@@ -66,7 +66,7 @@ public interface WorkerProcessParams {
       int maxWorkers,
       boolean isAsync,
       Optional<WorkerProcessIdentity> workerProcessIdentity) {
-    return ImmutableWorkerProcessParams.of(
+    return ImmutableWorkerProcessParams.ofImpl(
         tempDir, startupCommand, startupEnvironment, maxWorkers, isAsync, workerProcessIdentity);
   }
 }

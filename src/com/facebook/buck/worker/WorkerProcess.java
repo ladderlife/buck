@@ -145,7 +145,7 @@ public class WorkerProcess implements Closeable {
             "Sending job %d to process %d \n" + " job arguments: '%s'",
             messageID, this.hashCode(), jobArgs);
         protocol.send(
-            messageID, ImmutableWorkerProcessCommand.of(argsPath, stdoutPath, stderrPath));
+            messageID, ImmutableWorkerProcessCommand.ofImpl(argsPath, stdoutPath, stderrPath));
       }
 
     } catch (Throwable t) {
