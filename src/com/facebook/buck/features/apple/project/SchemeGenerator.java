@@ -89,10 +89,14 @@ class SchemeGenerator {
   private final Optional<ImmutableMap<SchemeActionType, ImmutableMap<String, String>>>
       environmentVariables;
   private final Optional<ImmutableMap<SchemeActionType, PBXTarget>> expandVariablesBasedOn;
+  private final Optional<ImmutableMap<SchemeActionType, ImmutableMap<String, String>>>
+      commandLineArguments;
   private Optional<
           ImmutableMap<
               SchemeActionType, ImmutableMap<XCScheme.AdditionalActions, ImmutableList<String>>>>
       additionalSchemeActions;
+  private final Optional<String> applicationLanguage;
+  private final Optional<String> applicationRegion;
 
   public SchemeGenerator(
       ProjectFilesystem projectFilesystem,
@@ -110,6 +114,7 @@ class SchemeGenerator {
       ImmutableMap<PBXTarget, Path> targetToProjectPathMap,
       Optional<ImmutableMap<SchemeActionType, ImmutableMap<String, String>>> environmentVariables,
       Optional<ImmutableMap<SchemeActionType, PBXTarget>> expandVariablesBasedOn,
+      Optional<ImmutableMap<SchemeActionType, ImmutableMap<String, String>>> commandLineArguments,
       Optional<
               ImmutableMap<
                   SchemeActionType,
@@ -117,7 +122,9 @@ class SchemeGenerator {
           additionalSchemeActions,
       XCScheme.LaunchAction.LaunchStyle launchStyle,
       Optional<XCScheme.LaunchAction.WatchInterface> watchInterface,
-      Optional<String> notificationPayloadFile) {
+      Optional<String> notificationPayloadFile,
+      Optional<String> applicationLanguage,
+      Optional<String> applicationRegion) {
     this.projectFilesystem = projectFilesystem;
     this.primaryTarget = primaryTarget;
     this.watchInterface = watchInterface;
@@ -135,8 +142,11 @@ class SchemeGenerator {
     this.targetToProjectPathMap = targetToProjectPathMap;
     this.environmentVariables = environmentVariables;
     this.expandVariablesBasedOn = expandVariablesBasedOn;
+    this.commandLineArguments = commandLineArguments;
     this.additionalSchemeActions = additionalSchemeActions;
     this.notificationPayloadFile = notificationPayloadFile;
+    this.applicationLanguage = applicationLanguage;
+    this.applicationRegion = applicationRegion;
 
     LOG.verbose(
         "Generating scheme with build targets %s, test build targets %s, test bundle targets %s",
@@ -249,17 +259,25 @@ class SchemeGenerator {
       }
     }
 
+    ImmutableMap<SchemeActionType, ImmutableMap<String, String>> commandLineArgs = ImmutableMap.of();
+    if (commandLineArguments.isPresent()) {
+      commandLineArgs = commandLineArguments.get();
+    }
+
     XCScheme.TestAction testAction =
         new XCScheme.TestAction(
             Objects.requireNonNull(actionConfigNames.get(SchemeActionType.TEST)),
             Optional.ofNullable(envVariables.get(SchemeActionType.TEST)),
             Optional.ofNullable(envVariablesBasedOn.get(SchemeActionType.TEST)),
+            Optional.ofNullable(commandLineArgs.get(SchemeActionType.TEST)),
             additionalCommandsForSchemeAction(
                 SchemeActionType.TEST, AdditionalActions.PRE_SCHEME_ACTIONS, primaryBuildReference),
             additionalCommandsForSchemeAction(
                 SchemeActionType.TEST,
                 AdditionalActions.POST_SCHEME_ACTIONS,
-                primaryBuildReference));
+                primaryBuildReference),
+            applicationLanguage,
+            applicationRegion);
 
     for (PBXTarget target : orderedRunTestTargets) {
       XCScheme.BuildableReference buildableReference =
@@ -287,6 +305,7 @@ class SchemeGenerator {
                     launchStyle,
                     Optional.ofNullable(envVariables.get(SchemeActionType.LAUNCH)),
                     Optional.ofNullable(envVariablesBasedOn.get(SchemeActionType.LAUNCH)),
+                    Optional.ofNullable(commandLineArgs.get(SchemeActionType.LAUNCH)),
                     additionalCommandsForSchemeAction(
                         SchemeActionType.LAUNCH,
                         AdditionalActions.PRE_SCHEME_ACTIONS,
@@ -295,7 +314,9 @@ class SchemeGenerator {
                         SchemeActionType.LAUNCH,
                         AdditionalActions.POST_SCHEME_ACTIONS,
                         primaryBuildReference),
-                    notificationPayloadFile));
+                    notificationPayloadFile,
+                    applicationLanguage,
+                    applicationRegion));
 
         profileAction =
             Optional.of(
@@ -304,6 +325,7 @@ class SchemeGenerator {
                     Objects.requireNonNull(actionConfigNames.get(SchemeActionType.PROFILE)),
                     Optional.ofNullable(envVariables.get(SchemeActionType.PROFILE)),
                     Optional.ofNullable(envVariablesBasedOn.get(SchemeActionType.PROFILE)),
+                    Optional.ofNullable(commandLineArgs.get(SchemeActionType.PROFILE)),
                     additionalCommandsForSchemeAction(
                         SchemeActionType.PROFILE,
                         AdditionalActions.PRE_SCHEME_ACTIONS,
@@ -399,6 +421,18 @@ class SchemeGenerator {
     return rootElement;
   }
 
+  public static Element serializeCommandLineArguments(
+      Document doc, ImmutableMap<String, String> commandLineArguments) {
+    Element rootElement = doc.createElement("CommandLineArguments");
+    for (String argumentKey : commandLineArguments.keySet()) {
+      Element argumentElement = doc.createElement("CommandLineArgument");
+      argumentElement.setAttribute("argument", argumentKey);
+      argumentElement.setAttribute("isEnabled", commandLineArguments.get(argumentKey));
+      rootElement.appendChild(argumentElement);
+    }
+    return rootElement;
+  }
+  
   public static Element serializeExpandVariablesBasedOn(
     Document doc, XCScheme.BuildableReference reference) {
     Element referenceElement = serializeBuildableReference(doc, reference);
@@ -473,6 +507,20 @@ class SchemeGenerator {
       Element environmentVariablesElement =
           serializeEnvironmentVariables(doc, testAction.getEnvironmentVariables().get());
       testActionElem.appendChild(environmentVariablesElement);
+    }
+
+    if (testAction.getCommandLineArguments().isPresent()) {
+      Element commandLineArgumentElement =
+          serializeCommandLineArguments(doc, testAction.getCommandLineArguments().get());
+          testActionElem.appendChild(commandLineArgumentElement);
+    }
+
+    if (testAction.getApplicationLanguage().isPresent()) {
+      testActionElem.setAttribute("language", testAction.getApplicationLanguage().get());
+    }
+
+    if (testAction.getApplicationRegion().isPresent()) {
+      testActionElem.setAttribute("region", testAction.getApplicationRegion().get());
     }
 
     return testActionElem;
@@ -551,6 +599,20 @@ class SchemeGenerator {
       launchActionElem.appendChild(environmentVariablesElement);
     }
 
+    if (launchAction.getCommandLineArguments().isPresent()) {
+      Element commandLineArgumentElement =
+          serializeCommandLineArguments(doc, launchAction.getCommandLineArguments().get());
+      launchActionElem.appendChild(commandLineArgumentElement);
+    }
+
+    if (launchAction.getApplicationLanguage().isPresent()) {
+      launchActionElem.setAttribute("language", launchAction.getApplicationLanguage().get());
+    }
+
+    if (launchAction.getApplicationRegion().isPresent()) {
+      launchActionElem.setAttribute("region", launchAction.getApplicationRegion().get());
+    }
+
     return launchActionElem;
   }
 
@@ -579,6 +641,12 @@ class SchemeGenerator {
       Element environmentVariablesElement =
           serializeEnvironmentVariables(doc, profileAction.getEnvironmentVariables().get());
       profileActionElem.appendChild(environmentVariablesElement);
+    }
+
+    if (profileAction.getCommandLineArguments().isPresent()) {
+      Element commandLineArgumentElement =
+          serializeCommandLineArguments(doc, profileAction.getCommandLineArguments().get());
+      profileActionElem.appendChild(commandLineArgumentElement);
     }
 
     return profileActionElem;

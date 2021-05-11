@@ -940,6 +940,8 @@ public class WorkspaceAndProjectGenerator {
       Optional<ImmutableMap<SchemeActionType, PBXTarget>> expandVariablesBasedOn) {
     Optional<ImmutableMap<SchemeActionType, ImmutableMap<String, String>>> environmentVariables =
         Optional.empty();
+    Optional<ImmutableMap<SchemeActionType, ImmutableMap<String, String>>> commandLineArguments =
+        Optional.empty();
     Optional<
             ImmutableMap<
                 SchemeActionType, ImmutableMap<XCScheme.AdditionalActions, ImmutableList<String>>>>
@@ -948,14 +950,19 @@ public class WorkspaceAndProjectGenerator {
     Optional<XCScheme.LaunchAction.WatchInterface> watchInterface = Optional.empty();
     Optional<String> notificationPayloadFile = Optional.empty();
     Optional<Boolean> wasCreatedForAppExtension = Optional.empty();
+    Optional<String> applicationLanguage = Optional.empty();
+    Optional<String> applicationRegion = Optional.empty();
 
     if (schemeConfigArg.isPresent()) {
       environmentVariables = schemeConfigArg.get().getEnvironmentVariables();
+      commandLineArguments = schemeConfigArg.get().getCommandLineArguments();
       additionalSchemeActions = schemeConfigArg.get().getAdditionalSchemeActions();
       launchStyle = schemeConfigArg.get().getLaunchStyle().orElse(launchStyle);
       watchInterface = schemeConfigArg.get().getWatchInterface();
       notificationPayloadFile = schemeConfigArg.get().getNotificationPayloadFile();
       wasCreatedForAppExtension = schemeConfigArg.get().getWasCreatedForAppExtension();
+      applicationLanguage = schemeConfigArg.get().getApplicationLanguage();
+      applicationRegion = schemeConfigArg.get().getApplicationRegion();
     }
 
     return new SchemeGenerator(
@@ -974,9 +981,13 @@ public class WorkspaceAndProjectGenerator {
         targetToProjectPathMap,
         environmentVariables,
         expandVariablesBasedOn,
+        commandLineArguments,
         additionalSchemeActions,
         launchStyle,
         watchInterface,
-        notificationPayloadFile);
+        notificationPayloadFile,
+        applicationLanguage,
+        applicationRegion
+        );
   }
 }

@@ -100,6 +100,13 @@ public class XcodeWorkspaceConfigDescription
     Optional<ImmutableMap<SchemeActionType, ImmutableMap<String, String>>>
         getEnvironmentVariables();
 
+    Optional<ImmutableMap<SchemeActionType, ImmutableMap<String, String>>>
+        getCommandLineArguments();
+
+    Optional<String> getApplicationLanguage();
+
+    Optional<String> getApplicationRegion();
+
     Optional<ImmutableMap<SchemeActionType, BuildTarget>> getExpandVariablesBasedOn();
 
     /**

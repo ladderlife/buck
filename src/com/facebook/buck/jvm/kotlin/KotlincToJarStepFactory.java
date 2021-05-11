@@ -105,9 +105,6 @@ public class KotlincToJarStepFactory extends CompileToJarStepFactory implements 
   private static final String AP_OPTIONS = KAPT3_PLUGIN + "apoptions=";
   private static final String KAPT_GENERATED = "kapt.kotlin.generated";
   private static final String MODULE_NAME = "-module-name";
-  private static final String NO_STDLIB = "-no-stdlib";
-  private static final String NO_REFLECT = "-no-reflect";
-  private static final String VERBOSE = "-verbose";
 
   private static final PathMatcher KOTLIN_PATH_MATCHER = FileExtensionMatcher.of("kt");
   private static final PathMatcher SRC_ZIP_MATCHER = GlobPatternMatcher.of("**.src.zip");
@@ -295,13 +292,11 @@ public class KotlincToJarStepFactory extends CompileToJarStepFactory implements 
               .addAll(getKotlincPluginsArgs(resolver))
               .addAll(annotationProcessingOptionsBuilder.build())
               .add(MODULE_NAME)
-              .add(moduleName)
-              .add(NO_STDLIB)
-              .add(NO_REFLECT);
+              .add(moduleName);
 
-      Path tmpSourceAbiFolder;
       if (abiGenerationPlugin != null) {
-        tmpSourceAbiFolder = JavaAbis.getTmpGenPathForSourceAbi(projectFilesystem, invokingRule);
+        Path tmpSourceAbiFolder = JavaAbis.getTmpGenPathForSourceAbi(projectFilesystem, invokingRule);
+        addCreateFolderStep(steps, projectFilesystem, buildContext, tmpSourceAbiFolder);
         extraArguments.add("-Xplugin=" + abiGenerationPlugin);
         extraArguments.add(
             "-P", "plugin:org.jetbrains.kotlin.jvm.abi:outputDir=" + tmpSourceAbiFolder);
@@ -316,7 +311,6 @@ public class KotlincToJarStepFactory extends CompileToJarStepFactory implements 
               allClasspaths,
               kotlinc,
               extraArguments.build(),
-              ImmutableList.of(VERBOSE),
               projectFilesystem,
               Optional.of(parameters.getOutputPaths().getWorkingDirectory())));
 

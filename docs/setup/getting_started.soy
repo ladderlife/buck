@@ -302,10 +302,9 @@ xcode-select --install
 # Download and Install Java SE 8 from:
 +# https://www.oracle.com/technetwork/java/javase/downloads/index.html.
 +# This installs the JDK 8, a superset of the JRE.
-+# Alternatively, install AdoptOpenJDK 8 with Homebrew Cask:
-+brew tap homebrew/cask-cask
-+brew tap homebrew/cask-versions
-+brew cask install homebrew/cask-versions/adoptopenjdk8
++# Alternatively, install AdoptOpenJDK 8 with Homebrew:
++brew tap AdoptOpenJDK/openjdk
++brew install --cask adoptopenjdk8
 </pre>{/literal}
 
 <span><block class="mac ios" /></span>
@@ -519,6 +518,9 @@ For some distros, the default packages may be older than what you would like. In
     </li>
     <li>
       <code>ANDROID_HOME</code> environment variable
+    </li>
+    <li>
+      <code>ANDROID_SDK_ROOT</code> environment variable
     </li>
     <li>
       The value of the {call buckconfig.android_sdk_path /} property 
@@ -779,6 +781,7 @@ $ env | grep ANDROID_
 ANDROID_HOME=&lt;path-to-sdk&gt;
 ANDROID_NDK_REPOSITORY=&lt;path-to-ndk&gt;
 ANDROID_SDK=&lt;path-to-sdk&gt;
+ANDROID_SDK_ROOT=&lt;path-to-sdk&gt;
 </pre>
 {/literal}
 
