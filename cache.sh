@@ -1,0 +1,25 @@
+#!/usr/bin/env nix-shell
+#!nix-shell -i bash -p nixUnstable -p cachix
+
+# Get in touch with @piperswe to be added to the Cachix cache
+
+set -euxo pipefail
+
+: "${CACHIX_CACHE=:ladderlife-buck}"
+
+# See https://docs.cachix.org/pushing#flakes
+
+# Cache inputs
+nix --experimental-features 'nix-command flakes' flake archive --json \
+  | jq -r '.path,(.inputs|to_entries[].value.path)' \
+  | cachix push "$CACHIX_CACHE"
+# Cache build dependencies
+cachix watch-exec "$CACHIX_CACHE" nix -- --experimental-features 'nix-command flakes' build
+# Cache artifacts
+nix --experimental-features 'nix-command flakes' build --json \
+  | jq -r '.[].outputs | to_entries[].value' \
+  | cachix push "$CACHIX_CACHE"
+# Cache dev shell
+nix --experimental-features 'nix-command flakes' develop --profile dev-profile
+cachix push "$CACHIX_CACHE" dev-profile
+rm dev-profile

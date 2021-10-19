@@ -78,3 +78,5 @@ Session.vim
 tools/ideabuck/src/com/facebook/buck/intellij/ideabuck/lang/_BuckLexer.java
 tools/ideabuck/gen
 
+# Nix
+result
