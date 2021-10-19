@@ -28,18 +28,6 @@ releaseTools.antBuild rec {
     makeWrapper
   ];
 
-  #  phases = [ "installPhase" ];
-  #
-  #  buildInputs = [ jdk python3 watchman python3Packages.pywatchman makeWrapper ];
-  #
-  #  installPhase = ''
-  #    install -D -m755 $src $out/bin/buck
-  #    wrapProgram $out/bin/buck \
-  #      --prefix PYTHONPATH : $PYTHONPATH \
-  #      --prefix PATH : "${lib.makeBinPath [ jdk watchman ]}" \
-  #      --set JAVA_HOME "${jdk}"
-  #  '';
-
   postBuild = ''
     pex=$(bin/buck build buck --show-output | awk '{print $2}')
   '';
