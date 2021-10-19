@@ -5,7 +5,7 @@
 
 set -euxo pipefail
 
-: "${CACHIX_CACHE=:ladderlife-buck}"
+CACHIX_CACHE="${CACHIX_CACHE:-ladderlife-buck}"
 
 # See https://docs.cachix.org/pushing#flakes
 
