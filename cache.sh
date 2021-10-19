@@ -20,6 +20,6 @@ nix --experimental-features 'nix-command flakes' build --json \
   | jq -r '.[].outputs | to_entries[].value' \
   | cachix push "$CACHIX_CACHE"
 # Cache dev shell
-nix --experimental-features 'nix-command flakes' develop --profile dev-profile
+nix --experimental-features 'nix-command flakes' develop --profile dev-profile --command true
 cachix push "$CACHIX_CACHE" dev-profile
 rm dev-profile
