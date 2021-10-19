@@ -9,12 +9,12 @@ CACHIX_CACHE="${CACHIX_CACHE:-ladderlife-buck}"
 
 # See https://docs.cachix.org/pushing#flakes
 
+# Cache build dependencies
+cachix watch-exec "$CACHIX_CACHE" nix -- --experimental-features 'nix-command flakes' build
 # Cache inputs
 nix --experimental-features 'nix-command flakes' flake archive --json \
   | jq -r '.path,(.inputs|to_entries[].value.path)' \
   | cachix push "$CACHIX_CACHE"
-# Cache build dependencies
-cachix watch-exec "$CACHIX_CACHE" nix -- --experimental-features 'nix-command flakes' build
 # Cache artifacts
 nix --experimental-features 'nix-command flakes' build --json \
   | jq -r '.[].outputs | to_entries[].value' \
