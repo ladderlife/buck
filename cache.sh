@@ -22,4 +22,4 @@ nix --experimental-features 'nix-command flakes' build --json \
 # Cache dev shell
 nix --experimental-features 'nix-command flakes' develop --profile dev-profile --command true
 cachix push "$CACHIX_CACHE" dev-profile
-rm dev-profile
+rm dev-profile*

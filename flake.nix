@@ -24,5 +24,9 @@
           pkgs.nixpkgs-fmt
         ];
       };
+
+      hydraJobs = {
+        inherit packages devShell;
+      };
     });
 }
