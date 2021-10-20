@@ -11,7 +11,7 @@ FLAKE="${FLAKE:-github:LadderLife/buck/piper/dev-with-async}"
 # See https://docs.cachix.org/pushing#flakes
 
 # Cache build dependencies
-cachix watch-exec "$CACHIX_CACHE" nix -- --experimental-features 'nix-command flakes' build "$FLAKE"
+cachix watch-exec "$CACHIX_CACHE" nix -- --experimental-features 'nix-command flakes' build --refresh "$FLAKE"
 # Cache inputs
 nix --experimental-features 'nix-command flakes' flake archive "$FLAKE" --json \
   | jq -r '.path,(.inputs|to_entries[].value.path)' \
