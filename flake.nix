@@ -26,7 +26,7 @@
       };
 
       hydraJobs = {
-        inherit packages devShell;
+        inherit packages;
       };
     });
 }
