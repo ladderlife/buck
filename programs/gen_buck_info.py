@@ -17,10 +17,10 @@ import sys
 
 
 # Hardcode the version
-version = "v2018.06.25.01"
+version = "02011c69d5b84c90ff5a5838b7ec7f29b8cc1fab"
 timestamp = "946684800"
 dirty = False
-java_version = 8
+java_version = 11
 
 json.dump(
     {
