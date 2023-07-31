@@ -281,10 +281,14 @@ public class DefaultOnDiskBuildInfo implements OnDiskBuildInfo {
     ImmutableSortedSet<Path> outputPaths = getRecursivePaths(recordedPaths);
     long outputSize = getOutputSize(outputPaths);
     artifactMetadataJson.put(BuildInfo.MetadataKey.OUTPUT_SIZE, String.valueOf(outputSize));
-    projectFilesystem.writeContentsToPath(
-        String.valueOf(outputSize),
-        metadataDirectory.resolve(BuildInfo.MetadataKey.ARTIFACT_METADATA));
+
+    // projectFilesystem.writeContentsToPath(
+    //     String.valueOf(outputSize),
+    //     metadataDirectory.resolve(BuildInfo.MetadataKey.ARTIFACT_METADATA));
+    LOG.debug("Computed OUTPUT_SIZE for ARTIFACT_METADATA as %s.", String.valueOf(outputSize));
+
     if (shouldWriteOutputHashes.apply(outputSize)) {
+      LOG.debug("Preparing to write RECORDED_PATH_HASHES and OUTPUT_HASH to ARTIFACT_METADATA.");
       // Grab and record the output hashes in the build metadata so that cache hits avoid re-hashing
       // file contents.  Since we use output hashes for input-based rule keys and for detecting
       // non-determinism, we would spend a lot of time re-hashing output paths -- potentially in
@@ -309,6 +313,8 @@ public class DefaultOnDiskBuildInfo implements OnDiskBuildInfo {
     projectFilesystem.writeContentsToPath(
         ObjectMappers.WRITER.writeValueAsString(artifactMetadataJson.build()),
         artifactMetadataFilePath);
+
+    LOG.debug("Wrote finalized ARTIFACT_METADATA.");
   }
 
   @Override
