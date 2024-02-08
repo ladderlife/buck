@@ -24,7 +24,7 @@ from programs.subprocutils import which
 
 JDK_8_AND_UNDER_PATH_VERSION_REGEX_STRINGS = [
     r"jdk(?P<full>1\.(?P<major>\d+)(\.\d+(_\d+)?)?)(\.jdk)?",
-    r"adoptopenjdk-(?P<full>(?P<major>[6-8])(\.\d+(_\d+)?)?)(\.jdk|\.jre)?",
+    r"(?:adoptopenjdk|temurin)-(?P<full>(?P<major>[6-8])(\.\d+(_\d+)?)?)(\.jdk|\.jre)?",
 ]
 JDK_9_AND_OVER_PATH_VERSION_REGEX_STRINGS = [
     r"jdk-(?P<full>(?P<major>\d+)(\.\d+(\.\d+(_\d+)?)?)?)(\.jdk)?",
