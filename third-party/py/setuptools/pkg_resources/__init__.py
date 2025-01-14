@@ -29,7 +29,6 @@ import stat
 import functools
 import pkgutil
 import token
-import symbol
 import operator
 import platform
 import collections
@@ -81,6 +80,7 @@ else:
 
 try:
     import parser
+    import symbol
 except ImportError:
     pass
 

@@ -49,6 +49,18 @@ public class SourceVersionUtils {
         return Opcodes.V10;
       case RELEASE_11:
         return Opcodes.V11;
+      case RELEASE_12:
+        return Opcodes.V12;
+      case RELEASE_13:
+        return Opcodes.V13;
+      case RELEASE_14:
+        return Opcodes.V14;
+      case RELEASE_15:
+        return Opcodes.V15;
+      case RELEASE_16:
+        return Opcodes.V16;
+      case RELEASE_17:
+        return Opcodes.V17;
       default:
         throw new IllegalArgumentException(String.format("Unexpected source version: %s", version));
     }
