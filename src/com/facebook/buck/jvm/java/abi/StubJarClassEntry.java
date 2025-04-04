@@ -54,69 +54,69 @@ class StubJarClassEntry extends StubJarEntry {
       boolean isKotlinModule,
       Map<String, List<String>> inlineFunctionsMap)
       throws IOException {
-      ClassNode stub = new ClassNode(Opcodes.ASM9);
+    ClassNode stub = new ClassNode(Opcodes.ASM9);
 
-      // Kotlin has the concept of "inline functions", which means that we need to retain the body
-      // of these functions so that the compiler is able to inline them.
-      List<String> methodBodiesToRetain = Collections.emptyList();
-      boolean isKotlinClass = false;
-      boolean retainAllMethodBodies = false;
+    // Kotlin has the concept of "inline functions", which means that we need to retain the body
+    // of these functions so that the compiler is able to inline them.
+    List<String> methodBodiesToRetain = Collections.emptyList();
+    boolean isKotlinClass = false;
+    boolean retainAllMethodBodies = false;
 
-      if (isKotlinModule) {
-          AnnotationNode kotlinMetadataAnnotation = findKotlinMetadataAnnotation(input, path);
-          if (kotlinMetadataAnnotation != null) {
-              isKotlinClass = true;
-              if (path.toString().contains("$sam$i")) {
-                  // These classes are created when we have a Single Abstract Method (SAM) interface that is
-                  // used within an inline function, and in these cases we need to retain the whole class.
-                  input.visitClass(path, stub, false);
-                  return new StubJarClassEntry(
-                                               path, stub, Collections.emptySet(), Collections.emptyList(), true, isKotlinClass);
-              }
-              ClassNode dummyStub = new ClassNode(Opcodes.ASM9);
-              input.visitClass(path, dummyStub, true);
-              retainAllMethodBodies =
-                  retainAllMethodBodies(
-                                        inlineFunctionsMap, path, dummyStub.outerClass, dummyStub.outerMethod);
-              if (retainAllMethodBodies) {
-                  methodBodiesToRetain =
-                      dummyStub.methods.stream()
-                      .map(methodNode -> methodNode.name)
-                      .collect(Collectors.toList());
-              } else {
-                  methodBodiesToRetain =
-                      KotlinMetadataReaderKt.getInlineFunctions(kotlinMetadataAnnotation);
-              }
-          }
-      }
+    if (isKotlinModule) {
+        AnnotationNode kotlinMetadataAnnotation = findKotlinMetadataAnnotation(input, path);
+        if (kotlinMetadataAnnotation != null) {
+            isKotlinClass = true;
+            if (path.toString().contains("$sam$i")) {
+                // These classes are created when we have a Single Abstract Method (SAM) interface that is
+                // used within an inline function, and in these cases we need to retain the whole class.
+                input.visitClass(path, stub, false);
+                return new StubJarClassEntry(
+                                             path, stub, Collections.emptySet(), Collections.emptyList(), true, isKotlinClass);
+            }
+            ClassNode dummyStub = new ClassNode(Opcodes.ASM9);
+            input.visitClass(path, dummyStub, true);
+            retainAllMethodBodies =
+                retainAllMethodBodies(
+                                      inlineFunctionsMap, path, dummyStub.outerClass, dummyStub.outerMethod);
+            if (retainAllMethodBodies) {
+                methodBodiesToRetain =
+                    dummyStub.methods.stream()
+                    .map(methodNode -> methodNode.name)
+                    .collect(Collectors.toList());
+            } else {
+                methodBodiesToRetain =
+                    KotlinMetadataReaderKt.getInlineFunctions(kotlinMetadataAnnotation);
+            }
+        }
+    }
 
-      // As we read the class in, we create a partial stub that removes non-ABI methods and fields
-      // but leaves the entire InnerClasses table. We record all classes that are referenced from
-      // ABI methods and fields, and will use that information later to filter the InnerClasses table.
-      ClassReferenceTracker referenceTracker = new ClassReferenceTracker(stub);
-      ClassVisitor firstLevelFiltering =
-          new AbiFilteringClassVisitor(referenceTracker, methodBodiesToRetain, null, isKotlinClass);
+    // As we read the class in, we create a partial stub that removes non-ABI methods and fields
+    // but leaves the entire InnerClasses table. We record all classes that are referenced from
+    // ABI methods and fields, and will use that information later to filter the InnerClasses table.
+    ClassReferenceTracker referenceTracker = new ClassReferenceTracker(stub);
+    ClassVisitor firstLevelFiltering =
+        new AbiFilteringClassVisitor(referenceTracker, methodBodiesToRetain, null, isKotlinClass);
 
-      // If we want ABIs that are compatible with those generated from source, we add a visitor
-      // at the very start of the chain which transforms the event stream coming out of `ClassNode`
-      // to look like what ClassVisitorDriverFromElement would have produced.
-      if (compatibilityMode != null && compatibilityMode != AbiGenerationMode.CLASS) {
-          firstLevelFiltering = new SourceAbiCompatibleVisitor(firstLevelFiltering, compatibilityMode);
-      }
-      input.visitClass(path, firstLevelFiltering, /* skipCode */ !isKotlinClass);
+    // If we want ABIs that are compatible with those generated from source, we add a visitor
+    // at the very start of the chain which transforms the event stream coming out of `ClassNode`
+    // to look like what ClassVisitorDriverFromElement would have produced.
+    if (compatibilityMode != null && compatibilityMode != AbiGenerationMode.CLASS) {
+        firstLevelFiltering = new SourceAbiCompatibleVisitor(firstLevelFiltering, compatibilityMode);
+    }
+    input.visitClass(path, firstLevelFiltering, /* skipCode */ !isKotlinClass);
 
-      // The synthetic package-info class is how package annotations are recorded; that one is
-      // actually used by the compiler
-      // Kotlin top functions reside in synthetic classes, we should output ABIs for them.
-      if ((isSyntheticClass(stub) && isKotlinModule)
-          || !(isSyntheticClass(stub) || isAnonymousOrLocalClass(stub))
-          || retainAllMethodBodies
-          || stub.name.endsWith("/package-info")) {
-          return new StubJarClassEntry(
-                                       path, stub, referenceTracker.getReferencedClassNames(), methodBodiesToRetain, false, isKotlinClass);
-      }
+    // The synthetic package-info class is how package annotations are recorded; that one is
+    // actually used by the compiler
+    // Kotlin top functions reside in synthetic classes, we should output ABIs for them.
+    if ((isSyntheticClass(stub) && isKotlinModule)
+        || !(isSyntheticClass(stub) || isAnonymousOrLocalClass(stub))
+        || retainAllMethodBodies
+        || stub.name.endsWith("/package-info")) {
+        return new StubJarClassEntry(
+                                     path, stub, referenceTracker.getReferencedClassNames(), methodBodiesToRetain, false, isKotlinClass);
+    }
 
-      return null;
+    return null;
   }
 
   private StubJarClassEntry(
