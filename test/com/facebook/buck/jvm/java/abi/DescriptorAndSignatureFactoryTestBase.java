@@ -224,8 +224,8 @@ public class DescriptorAndSignatureFactoryTestBase {
   }
 
   private ClassNode getClassNode(String classBinaryName) throws IOException {
-      ClassNode classNode = new ClassNode(Opcodes.ASM9);
-      correctClasses.acceptClassVisitor(classBinaryName, 0, classNode);
+    ClassNode classNode = new ClassNode(Opcodes.ASM9);
+    correctClasses.acceptClassVisitor(classBinaryName, 0, classNode);
     return classNode;
   }
 

@@ -248,8 +248,8 @@ class StubJarClassEntry extends StubJarEntry {
     private final List<String> nestMembers = new ArrayList<>();
 
     private InnerClassSortingClassVisitor(String className, ClassVisitor cv) {
-        super(Opcodes.ASM9, cv);
-        this.className = className;
+      super(Opcodes.ASM9, cv);
+      this.className = className;
     }
 
     @Override

@@ -24,8 +24,8 @@ class FirstOrderAnnotationVisitor extends AnnotationVisitor {
   private final FirstOrderTypeInfo.Builder mBuilder;
 
   public FirstOrderAnnotationVisitor(FirstOrderVisitorContext context) {
-      super(Opcodes.ASM9);
-      mBuilder = context.builder;
+    super(Opcodes.ASM9);
+    mBuilder = context.builder;
   }
 
   @Override
