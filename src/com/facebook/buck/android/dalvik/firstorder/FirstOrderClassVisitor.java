@@ -28,8 +28,8 @@ class FirstOrderClassVisitor extends ClassVisitor {
   private final FirstOrderTypeInfo.Builder mBuilder;
 
   FirstOrderClassVisitor(FirstOrderVisitorContext context) {
-    super(Opcodes.ASM7);
-    mContext = context;
+      super(Opcodes.ASM9);
+      mContext = context;
     mBuilder = mContext.builder;
   }
 
