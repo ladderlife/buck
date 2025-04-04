@@ -53,7 +53,7 @@ class AbiFilteringClassVisitor extends ClassVisitor {
       List<String> methodsWithRetainedBody,
       @Nullable Set<String> referencedClassNames,
       boolean isKotlinClass) {
-    super(Opcodes.ASM7, cv);
+    super(Opcodes.ASM9, cv);
     this.methodsWithRetainedBody = methodsWithRetainedBody;
     this.referencedClassNames = referencedClassNames;
     this.isKotlinClass = isKotlinClass;
