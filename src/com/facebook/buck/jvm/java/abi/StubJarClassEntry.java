@@ -81,8 +81,8 @@ class StubJarClassEntry extends StubJarEntry {
         if (retainAllMethodBodies) {
           methodBodiesToRetain =
               dummyStub.methods.stream()
-              .map(methodNode -> methodNode.name)
-              .collect(Collectors.toList());
+                  .map(methodNode -> methodNode.name)
+                  .collect(Collectors.toList());
         } else {
           methodBodiesToRetain =
               KotlinMetadataReaderKt.getInlineFunctions(kotlinMetadataAnnotation);
