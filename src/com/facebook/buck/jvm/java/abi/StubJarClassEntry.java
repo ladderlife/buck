@@ -63,31 +63,31 @@ class StubJarClassEntry extends StubJarEntry {
     boolean retainAllMethodBodies = false;
 
     if (isKotlinModule) {
-        AnnotationNode kotlinMetadataAnnotation = findKotlinMetadataAnnotation(input, path);
-        if (kotlinMetadataAnnotation != null) {
-            isKotlinClass = true;
-            if (path.toString().contains("$sam$i")) {
-                // These classes are created when we have a Single Abstract Method (SAM) interface that is
-                // used within an inline function, and in these cases we need to retain the whole class.
-                input.visitClass(path, stub, false);
-                return new StubJarClassEntry(
-                                             path, stub, Collections.emptySet(), Collections.emptyList(), true, isKotlinClass);
-            }
-            ClassNode dummyStub = new ClassNode(Opcodes.ASM9);
-            input.visitClass(path, dummyStub, true);
-            retainAllMethodBodies =
-                retainAllMethodBodies(
-                                      inlineFunctionsMap, path, dummyStub.outerClass, dummyStub.outerMethod);
-            if (retainAllMethodBodies) {
-                methodBodiesToRetain =
-                    dummyStub.methods.stream()
-                    .map(methodNode -> methodNode.name)
-                    .collect(Collectors.toList());
-            } else {
-                methodBodiesToRetain =
-                    KotlinMetadataReaderKt.getInlineFunctions(kotlinMetadataAnnotation);
-            }
-        }
+      AnnotationNode kotlinMetadataAnnotation = findKotlinMetadataAnnotation(input, path);
+      if (kotlinMetadataAnnotation != null) {
+          isKotlinClass = true;
+          if (path.toString().contains("$sam$i")) {
+              // These classes are created when we have a Single Abstract Method (SAM) interface that is
+              // used within an inline function, and in these cases we need to retain the whole class.
+              input.visitClass(path, stub, false);
+              return new StubJarClassEntry(
+                                           path, stub, Collections.emptySet(), Collections.emptyList(), true, isKotlinClass);
+          }
+          ClassNode dummyStub = new ClassNode(Opcodes.ASM9);
+          input.visitClass(path, dummyStub, true);
+          retainAllMethodBodies =
+              retainAllMethodBodies(
+                                    inlineFunctionsMap, path, dummyStub.outerClass, dummyStub.outerMethod);
+          if (retainAllMethodBodies) {
+              methodBodiesToRetain =
+                  dummyStub.methods.stream()
+                  .map(methodNode -> methodNode.name)
+                  .collect(Collectors.toList());
+          } else {
+              methodBodiesToRetain =
+                  KotlinMetadataReaderKt.getInlineFunctions(kotlinMetadataAnnotation);
+          }
+      }
     }
 
     // As we read the class in, we create a partial stub that removes non-ABI methods and fields
@@ -101,7 +101,7 @@ class StubJarClassEntry extends StubJarEntry {
     // at the very start of the chain which transforms the event stream coming out of `ClassNode`
     // to look like what ClassVisitorDriverFromElement would have produced.
     if (compatibilityMode != null && compatibilityMode != AbiGenerationMode.CLASS) {
-        firstLevelFiltering = new SourceAbiCompatibleVisitor(firstLevelFiltering, compatibilityMode);
+      firstLevelFiltering = new SourceAbiCompatibleVisitor(firstLevelFiltering, compatibilityMode);
     }
     input.visitClass(path, firstLevelFiltering, /* skipCode */ !isKotlinClass);
 
@@ -112,8 +112,8 @@ class StubJarClassEntry extends StubJarEntry {
         || !(isSyntheticClass(stub) || isAnonymousOrLocalClass(stub))
         || retainAllMethodBodies
         || stub.name.endsWith("/package-info")) {
-        return new StubJarClassEntry(
-                                     path, stub, referenceTracker.getReferencedClassNames(), methodBodiesToRetain, false, isKotlinClass);
+      return new StubJarClassEntry(
+                                   path, stub, referenceTracker.getReferencedClassNames(), methodBodiesToRetain, false, isKotlinClass);
     }
 
     return null;
