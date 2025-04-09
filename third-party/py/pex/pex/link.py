@@ -5,7 +5,10 @@ from __future__ import absolute_import
 
 import os
 import posixpath
-from collections import Iterable
+try:
+    from collections.abc import Iterable
+except:
+    from collections import Iterable
 
 from .compatibility import string as compatible_string
 from .compatibility import PY3
