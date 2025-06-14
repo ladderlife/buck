@@ -18,7 +18,6 @@ import abc
 import collections
 import contextlib
 import functools
-import imp
 import inspect
 import json
 import optparse
@@ -104,7 +103,7 @@ _LOAD_TARGET_PATH_RE = re.compile(
 
 # matches anything equivalent to recursive glob on all dirs
 # e.g. "**/", "*/**/", "*/*/**/"
-_RECURSIVE_GLOB_PATTERN = re.compile("^(\*/)*\*\*/")  # type: Pattern[str]
+_RECURSIVE_GLOB_PATTERN = re.compile(r"^(\*/)*\*\*/")  # type: Pattern[str]
 
 
 class AbstractContext(object):
@@ -1538,7 +1537,7 @@ class BuildFileProcessor(object):
         frame = get_caller_frame(skip=["_functools", __name__])
         if namespace is not None:
             # If using a fresh namespace, create a fresh module to populate.
-            fresh_module = imp.new_module(namespace)
+            fresh_module = types.ModuleType(namespace)
             fresh_module.__file__ = mod.__file__
             self._merge_globals(mod, fresh_module.__dict__)
             frame.f_globals[namespace] = fresh_module
@@ -1827,7 +1826,7 @@ class BuildFileProcessor(object):
 
             # Build a new module for the given file, using the default globals
             # created above.
-            module = imp.new_module(path)
+            module = types.ModuleType(path)
             module.__file__ = path
             module.__dict__.update(default_globals)
 

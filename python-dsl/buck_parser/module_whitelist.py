@@ -15,7 +15,7 @@
 from __future__ import absolute_import, division, print_function, with_statement
 
 import contextlib
-import imp
+import types
 import inspect
 
 from six.moves import builtins
@@ -154,7 +154,7 @@ class ImportWhitelistManager(object):
             mod = ORIGINAL_IMPORT(name, fromlist=[""])
 
         # Build a new module for the safe version
-        safe_mod = imp.new_module(name)
+        safe_mod = types.ModuleType(name)
 
         # Install whitelisted parts of the module, block the rest to produce errors
         # informing about the safe version.

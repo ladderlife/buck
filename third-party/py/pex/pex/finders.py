@@ -212,7 +212,8 @@ def register_finders():
       zipimport.zipimporter, ChainedFinder.of(find_eggs_in_zip, find_wheels_in_zip))
 
   # append the wheel finder
-  _add_finder(pkgutil.ImpImporter, find_wheels_on_path)
+  if hasattr(pkgutil, 'ImpImporter'):
+    _add_finder(pkgutil.ImpImporter, find_wheels_on_path)
 
   if importlib_machinery is not None:
     _add_finder(importlib_machinery.FileFinder, find_wheels_on_path)
@@ -228,7 +229,8 @@ def unregister_finders():
     return
 
   pkg_resources.register_finder(zipimport.zipimporter, __PREVIOUS_FINDER)
-  _remove_finder(pkgutil.ImpImporter, find_wheels_on_path)
+  if hasattr(pkgutil, 'ImpImporter'):
+    _remove_finder(pkgutil.ImpImporter, find_wheels_on_path)
 
   if importlib_machinery is not None:
     _remove_finder(importlib_machinery.FileFinder, find_wheels_on_path)

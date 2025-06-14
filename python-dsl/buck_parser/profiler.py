@@ -210,7 +210,7 @@ class Profiler(object):
 
     @staticmethod
     def _recursive_write_callstack_report(node, prefix_str, highlights_set):
-        """Generate an aggregated call stack tree that looks like this one:
+        r"""Generate an aggregated call stack tree that looks like this one:
 
         |-0.04 glob_watchman (glob_watchman.py:103)
         | \-0.04 wrapped (util.py:76)
@@ -250,7 +250,7 @@ class Profiler(object):
             highlighted = highlight_key in highlights_set
 
             if i == nodes_count - 1:
-                node_prefix_str = prefix_str + "\\-"
+                node_prefix_str = prefix_str + r"\-"
                 next_prefix_str = prefix_str + "  "
             else:
                 node_prefix_str = prefix_str + "|-"
@@ -444,12 +444,12 @@ class Tracer:
                 if trace.get_children():
                     if indent:
                         if indent[-1] == "-":
-                            indent[-2:] = list(" | \\-")
+                            indent[-2:] = list(r" | \-")
                         if len(indent) > 80:
                             # Arbitrary max depth.  Indicate by "*" to stop nesting.
                             indent[-1] = "*"
                     else:
-                        indent = list("| \\-")
+                        indent = list(r"| \-")
                     queue.extend(
                         [(t, indent, trace) for t in reversed(trace.get_children())]
                     )

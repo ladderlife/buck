@@ -528,7 +528,7 @@ class BuckTest(unittest.TestCase):
             self.assertRaisesRegexp(
                 AssertionError,
                 "Mixing 'exclude' and 'excludes' attributes is not allowed. Please replace your "
-                "exclude and excludes arguments with a single 'excludes = \['e1', 'e2'\]'.",
+                r"exclude and excludes arguments with a single 'excludes = \['e1', 'e2'\]'.",
                 build_file_processor.process,
                 build_file.root,
                 build_file.prefix,
@@ -798,7 +798,7 @@ class BuckTest(unittest.TestCase):
             with self.assertRaisesRegexp(
                 ValueError,
                 "Relative loads work only for files in the same directory. "
-                "Please use absolute label instead \(\[cell\]//pkg\[/pkg\]:target\).",
+                r"Please use absolute label instead \(\[cell\]//pkg\[/pkg\]:target\).",
             ):
                 build_file_processor.process(
                     build_file.root,
@@ -1041,7 +1041,7 @@ class BuckTest(unittest.TestCase):
         with build_file_processor.with_builtins(builtins.__dict__):
             with self.assertRaisesRegexp(
                 AssertionError,
-                "Cannot use `rule_exists\(\)` at the top-level of an included file.",
+                r"Cannot use `rule_exists\(\)` at the top-level of an included file.",
             ):
                 build_file_processor.process(
                     build_file.root, build_file.prefix, build_file.path, [], None
@@ -1128,7 +1128,7 @@ class BuckTest(unittest.TestCase):
         with build_file_processor.with_builtins(builtins.__dict__):
             with self.assertRaisesRegexp(
                 AssertionError,
-                "Cannot use `package_name\(\)` at the top-level of an included file.",
+                r"Cannot use `package_name\(\)` at the top-level of an included file.",
             ):
                 build_file_processor.process(
                     build_file.root,
@@ -1836,7 +1836,7 @@ foo_rule(
                 """
 import collections
 
-class ListLike(collections.MutableSequence):
+class ListLike(collections.abc.MutableSequence):
   def __init__(self, list):
     self.list = list
   def __delitem__(self, key):
@@ -1887,7 +1887,7 @@ foo_rule(
                 """
 import collections
 
-class DictLike(collections.MutableMapping):
+class DictLike(collections.abc.MutableMapping):
   def __init__(self, dict):
     self.dict = dict
   def __delitem__(self, key):
