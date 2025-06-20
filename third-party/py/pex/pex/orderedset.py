@@ -8,7 +8,10 @@
 # modifications
 #
 
-import collections
+try:
+    import collections.abc as collections
+except:
+    import collections
 
 
 class OrderedSet(collections.MutableSet):
