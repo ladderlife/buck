@@ -26,7 +26,7 @@ class FirstOrderFieldVisitor extends FieldVisitor {
   // Unused by dexopt: private final FirstOrderTypeInfo.Builder mBuilder;
 
   public FirstOrderFieldVisitor(FirstOrderVisitorContext context) {
-    super(Opcodes.ASM7);
+    super(Opcodes.ASM9);
     mContext = context;
     // Unused by dexopt: mBuilder = context.builder;
   }

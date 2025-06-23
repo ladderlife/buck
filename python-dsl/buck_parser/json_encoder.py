@@ -14,7 +14,11 @@
 
 from __future__ import absolute_import, division, print_function, with_statement
 
-import collections
+try:
+    import collections.abc as collections
+except:
+    import collections
+
 from json import JSONEncoder
 
 from .select_support import SelectorList, SelectorValue

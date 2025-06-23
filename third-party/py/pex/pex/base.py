@@ -3,7 +3,10 @@
 
 from __future__ import absolute_import
 
-from collections.abc import Iterable
+try:
+    from collections.abc import Iterable
+except:
+    from collections import Iterable
 
 from pkg_resources import Requirement
 

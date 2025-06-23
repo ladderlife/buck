@@ -54,7 +54,7 @@ class StubJarClassEntry extends StubJarEntry {
       boolean isKotlinModule,
       Map<String, List<String>> inlineFunctionsMap)
       throws IOException {
-    ClassNode stub = new ClassNode(Opcodes.ASM7);
+    ClassNode stub = new ClassNode(Opcodes.ASM9);
 
     // Kotlin has the concept of "inline functions", which means that we need to retain the body
     // of these functions so that the compiler is able to inline them.
@@ -73,7 +73,7 @@ class StubJarClassEntry extends StubJarEntry {
           return new StubJarClassEntry(
               path, stub, Collections.emptySet(), Collections.emptyList(), true, isKotlinClass);
         }
-        ClassNode dummyStub = new ClassNode(Opcodes.ASM7);
+        ClassNode dummyStub = new ClassNode(Opcodes.ASM9);
         input.visitClass(path, dummyStub, true);
         retainAllMethodBodies =
             retainAllMethodBodies(
@@ -248,7 +248,7 @@ class StubJarClassEntry extends StubJarEntry {
     private final List<String> nestMembers = new ArrayList<>();
 
     private InnerClassSortingClassVisitor(String className, ClassVisitor cv) {
-      super(Opcodes.ASM7, cv);
+      super(Opcodes.ASM9, cv);
       this.className = className;
     }
 

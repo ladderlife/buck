@@ -1034,6 +1034,12 @@ class BuckTool(object):
             ):
                 # Change default filesystem to custom filesystem for memory optimizations
                 # Calls like Paths.get() would return optimized Path implementation
+                if self.get_buck_compiled_java_version() >= 17:
+                    java_args.append("--add-opens=jdk.compiler/com.sun.tools.javac=ALL-UNNAMED")
+                    java_args.append("--add-opens=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED")
+                    java_args.append("--add-opens=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED")
+                    java_args.append("--add-opens=jdk.compiler/com.sun.tools.javac.code.api=ALL-UNNAMED")
+                    java_args.append("--add-opens=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED")
                 if self.get_buck_compiled_java_version() >= 9:
                     # In Java 9+, the default file system provider gets initialized in the middle of
                     # loading the jar for the main class (bootstrapper.jar for Buck). Due to a

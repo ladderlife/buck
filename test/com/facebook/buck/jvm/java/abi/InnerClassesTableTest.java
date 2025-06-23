@@ -581,7 +581,7 @@ public class InnerClassesTableTest {
       InnerClassesTable innerClassesTable =
           new InnerClassesTable(descriptorFactory, accessFlags, topElement);
 
-      ClassNode classNode = new ClassNode(Opcodes.ASM7);
+      ClassNode classNode = new ClassNode(Opcodes.ASM9);
       innerClassesTable.reportInnerClassReferences(classNode);
 
       assertEquals(
