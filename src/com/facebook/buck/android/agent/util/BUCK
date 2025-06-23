@@ -4,8 +4,8 @@ load("//tools/build_rules:file_alias.bzl", "file_alias")
 java_library(
     name = "util",
     srcs = glob(["*.java"]),
-    source = "6",
-    target = "6",
+    source = "8",
+    target = "8",
     tests = [
         "//test/com/facebook/buck/android/agent/util:util",
     ],

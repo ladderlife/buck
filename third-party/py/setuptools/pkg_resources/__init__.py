@@ -2151,7 +2151,8 @@ def find_on_path(importer, path_item, only=False):
                         for item in dists:
                             yield item
                         break
-register_finder(pkgutil.ImpImporter, find_on_path)
+if hasattr(pkgutil, 'ImpImporter'):
+    register_finder(pkgutil.ImpImporter, find_on_path)
 
 if importlib_machinery is not None:
     register_finder(importlib_machinery.FileFinder, find_on_path)
@@ -2179,29 +2180,56 @@ def register_namespace_handler(importer_type, namespace_handler):
 
 def _handle_ns(packageName, path_item):
     """Ensure that named package includes a subpath of path_item (if needed)"""
-
     importer = get_importer(path_item)
     if importer is None:
         return None
-    loader = importer.find_module(packageName)
-    if loader is None:
+
+    # Use find_spec if available (Python 3.10+), otherwise fall back to find_module
+    # but handle Python 3.12+ where find_module was removed from zipimporter
+    if hasattr(importer, 'find_spec'):
+        spec = importer.find_spec(packageName)
+        if spec is None or spec.loader is None:
+            return None
+        loader = spec.loader
+    elif hasattr(importer, 'find_module'):
+        # For Python < 3.10 that still has find_module
+        loader = importer.find_module(packageName)
+        if loader is None:
+            return None
+        # Create a minimal spec-like object for compatibility
+        spec = types.SimpleNamespace()
+        spec.loader = loader
+    else:
+        # This shouldn't happen, but just in case
         return None
+
     module = sys.modules.get(packageName)
     if module is None:
-        module = sys.modules[packageName] = types.ModuleType(packageName)
+        # create new namespace package module
+        module = types.ModuleType(packageName)
         module.__path__ = []
+        # register spec/loader for importlib machinery
+        if hasattr(spec, '__dict__'):
+            module.__spec__   = spec
+        module.__loader__ = loader
+        sys.modules[packageName] = module
         _set_parent_ns(packageName)
-    elif not hasattr(module,'__path__'):
+    elif not hasattr(module, '__path__'):
         raise TypeError("Not a package:", packageName)
+
     handler = _find_adapter(_namespace_handlers, importer)
     subpath = handler(importer, path_item, packageName, module)
+
     if subpath is not None:
-        path = module.__path__
-        path.append(subpath)
-        loader.load_module(packageName)
-        for path_item in path:
-            if path_item not in module.__path__:
-                module.__path__.append(path_item)
+        # add the new directory to the package path
+        if subpath not in module.__path__:
+            module.__path__.append(subpath)
+        # execute the module via exec_module() if available, otherwise use load_module
+        if hasattr(loader, 'exec_module') and hasattr(spec, '__dict__'):
+            loader.exec_module(module)
+        elif hasattr(loader, 'load_module'):
+            loader.load_module(packageName)
+
     return subpath
 
 def declare_namespace(packageName):
@@ -2259,7 +2287,8 @@ def file_ns_handler(importer, path_item, packageName, module):
         # Only return the path if it's not already there
         return subpath
 
-register_namespace_handler(pkgutil.ImpImporter, file_ns_handler)
+if hasattr(pkgutil, 'ImpImporter'):
+    register_namespace_handler(pkgutil.ImpImporter, file_ns_handler)
 register_namespace_handler(zipimport.zipimporter, file_ns_handler)
 
 if importlib_machinery is not None:

@@ -30,12 +30,12 @@ class BuckJSONEncoder(JSONEncoder):
         super(BuckJSONEncoder, self).__init__()
 
     def default(self, obj):
-        if isinstance(obj, collections.Mapping) and isinstance(
-            obj, collections.Sized
+        if isinstance(obj, collections.abc.Mapping) and isinstance(
+            obj, collections.abc.Sized
         ):  # nopep8
             return dict(obj)
-        elif isinstance(obj, collections.Iterable) and isinstance(
-            obj, collections.Sized
+        elif isinstance(obj, collections.abc.Iterable) and isinstance(
+            obj, collections.abc.Sized
         ):
             return list(obj)
         elif isinstance(obj, SelectorValue):

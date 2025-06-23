@@ -3,8 +3,8 @@ android_library(
     srcs = glob(["*.java"]),
     # Because this code gets dx'd, we restrict the source to Java 6 so that
     # trying to use something like try-with-resources is a compile-time error.
-    source = "6",
-    target = "6",
+    source = "8",
+    target = "8",
     visibility = [
         "//android/com/facebook/buck/android/agent/...",
     ],

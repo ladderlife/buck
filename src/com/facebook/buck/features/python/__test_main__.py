@@ -38,10 +38,7 @@ import time
 import traceback
 import unittest
 import warnings
-
-with warnings.catch_warnings():
-    warnings.filterwarnings("ignore", category=DeprecationWarning)
-    import imp
+import importlib.util
 
 try:
     from StringIO import StringIO
@@ -103,17 +100,15 @@ class DebugWipeFinder(object):
     def find_module(self, fullname, path=None):
         _, _, basename = fullname.rpartition(".")
         try:
-            fd, pypath, (_, _, kind) = imp.find_module(basename, path)
-        except Exception:
-            # Maybe it's a top level module
-            try:
-                fd, pypath, (_, _, kind) = imp.find_module(basename, None)
-            except Exception:
+            spec = importlib.util.find_spec(fullname)
+            if spec is None or spec.origin is None:
                 return None
+            pypath = spec.origin
+        except Exception:
+            return None
 
-        if hasattr(fd, "close"):
-            fd.close()
-        if kind != imp.PY_SOURCE:
+        # Check if it's a Python source file
+        if not pypath.endswith(('.py', '.pyw')):
             return None
         if self.matcher.include(pypath):
             return None

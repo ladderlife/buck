@@ -1355,11 +1355,11 @@ class CollectionsAbcTests(BaseTestCase):
         self.assertIsSubclass(MMC, typing.Mapping)
 
         self.assertIsInstance(MMB[KT, VT](), typing.Mapping)
-        self.assertIsInstance(MMB[KT, VT](), collections.Mapping)
+        self.assertIsInstance(MMB[KT, VT](), collections.abc.Mapping)
 
-        self.assertIsSubclass(MMA, collections.Mapping)
-        self.assertIsSubclass(MMB, collections.Mapping)
-        self.assertIsSubclass(MMC, collections.Mapping)
+        self.assertIsSubclass(MMA, collections.abc.Mapping)
+        self.assertIsSubclass(MMB, collections.abc.Mapping)
+        self.assertIsSubclass(MMC, collections.abc.Mapping)
 
         self.assertIsSubclass(MMB[str, str], typing.Mapping)
         self.assertIsSubclass(MMC, MMA)
@@ -1371,9 +1371,9 @@ class CollectionsAbcTests(BaseTestCase):
         def g(): yield 0
         self.assertIsSubclass(G, typing.Generator)
         self.assertIsSubclass(G, typing.Iterable)
-        if hasattr(collections, 'Generator'):
-            self.assertIsSubclass(G, collections.Generator)
-        self.assertIsSubclass(G, collections.Iterable)
+        if hasattr(collections.abc, 'Generator'):
+            self.assertIsSubclass(G, collections.abc.Generator)
+        self.assertIsSubclass(G, collections.abc.Iterable)
         self.assertNotIsSubclass(type(g), G)
 
     def test_subclassing_subclasshook(self):
@@ -1409,20 +1409,20 @@ class CollectionsAbcTests(BaseTestCase):
         self.assertIsSubclass(D, B)
 
         class M(): pass
-        collections.MutableMapping.register(M)
+        collections.abc.MutableMapping.register(M)
         self.assertIsSubclass(M, typing.Mapping)
 
     def test_collections_as_base(self):
 
-        class M(collections.Mapping): pass
+        class M(collections.abc.Mapping): pass
         self.assertIsSubclass(M, typing.Mapping)
         self.assertIsSubclass(M, typing.Iterable)
 
-        class S(collections.MutableSequence): pass
+        class S(collections.abc.MutableSequence): pass
         self.assertIsSubclass(S, typing.MutableSequence)
         self.assertIsSubclass(S, typing.Iterable)
 
-        class I(collections.Iterable): pass
+        class I(collections.abc.Iterable): pass
         self.assertIsSubclass(I, typing.Iterable)
 
         class A(collections.Mapping): pass

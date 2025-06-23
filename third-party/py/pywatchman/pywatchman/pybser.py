@@ -177,8 +177,8 @@ class _bser_buffer(object):
             self.ensure_size(needed)
             struct.pack_into(b'=cd', self.buf, self.wpos, BSER_REAL, val)
             self.wpos += needed
-        elif isinstance(val, collections.Mapping) and \
-            isinstance(val, collections.Sized):
+        elif isinstance(val, collections.abc.Mapping) and \
+            isinstance(val, collections.abc.Sized):
             val_len = len(val)
             size = _int_size(val_len)
             needed = 2 + size
@@ -205,8 +205,8 @@ class _bser_buffer(object):
             for k, v in iteritems:
                 self.append_string(k)
                 self.append_recursive(v)
-        elif isinstance(val, collections.Iterable) and \
-            isinstance(val, collections.Sized):
+        elif isinstance(val, collections.abc.Iterable) and \
+            isinstance(val, collections.abc.Sized):
             val_len = len(val)
             size = _int_size(val_len)
             needed = 2 + size
